@@ -1,254 +1,115 @@
-"use strict";
-
+// app.js
 let globalData = [];
-let searchListenerAttached = false;
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function getSeo(item) {
-  return item && item.seo && typeof item.seo === "object"
-    ? item.seo
-    : item || {};
-}
-
-function getItemUrl(item, seo) {
-  return seo.videoUrl ||
-    seo.imageUrl ||
-    item.url ||
-    "";
-}
-
-function getPageFileName(id) {
-  return String(id || "")
-    .replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
-function getKeywords(value) {
-  if (Array.isArray(value)) {
-    return value
-      .map((keyword) => String(keyword).trim())
-      .filter(Boolean);
-  }
-
-  return String(value || "")
-    .split(",")
-    .map((keyword) => keyword.trim())
-    .filter(Boolean);
-}
 
 async function loadData() {
-  const galleryGrid = document.getElementById("gallery");
-
-  if (galleryGrid) {
-    galleryGrid.innerHTML = `
-      <div class="loading-state">
-        <div class="loading-spinner" aria-hidden="true"></div>
-        <h2>Loading comparison intelligence…</h2>
-        <p>Retrieving media, specifications, and SEO review data.</p>
-      </div>
-    `;
-  }
-
-  try {
-    const response = await fetch("./data.json", {
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const rawJson = await response.json();
-
-    globalData = Array.isArray(rawJson)
-      ? rawJson
-      : rawJson.records || rawJson.data || [];
-
-    if (!Array.isArray(globalData) || globalData.length === 0) {
-      if (galleryGrid) {
-        galleryGrid.innerHTML = `
-          <div class="empty-state">
-            <h2>No reviews published yet</h2>
-            <p>Add your first Cloudflare media item from the Apps Script Media Studio.</p>
-          </div>
-        `;
-      }
-      return;
-    }
-
-    renderCards(globalData);
-    setupControls();
-  } catch (error) {
-    console.error("Feed loading error:", error);
-
+    const galleryGrid = document.getElementById('gallery');
     if (galleryGrid) {
-      galleryGrid.innerHTML = `
-        <div class="error-state">
-          <h2>Unable to load the media feed</h2>
-          <p>Run the GitHub sync workflow and try again.</p>
-        </div>
-      `;
+        galleryGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color);">
+                <div style="font-size: 1.5rem; margin-bottom: 10px;">⏳</div>
+                <h3 style="margin: 0 0 5px 0; color: var(--text-main);">Loading Crawlable 2+ Product Comparison Intelligence...</h3>
+                <p style="margin: 0; color: var(--text-muted);">Retrieving multi-device comparison specs, rich descriptions, and JSON-LD schema.</p>
+            </div>
+        `;
     }
-  }
+
+    try {
+        const response = await fetch('./data.json', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const rawJson = await response.json();
+        globalData = Array.isArray(rawJson) ? rawJson : (rawJson.data || []);
+
+        if (!Array.isArray(globalData) || globalData.length === 0) {
+            if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; grid-column:1/-1;">No comparison reviews published yet.</p>';
+            return;
+        }
+
+        renderCards(globalData);
+        setupControls();
+    } catch (err) {
+        console.error('Fetch error:', err);
+        if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; color:red; grid-column:1/-1;">Error loading data.json feed.</p>';
+    }
 }
 
 function renderCards(items) {
-  const galleryGrid = document.getElementById("gallery");
-  const schemaContainer =
-    document.getElementById("seo-schema-container") ||
-    document.head;
+    const galleryGrid = document.getElementById('gallery');
+    const schemaContainer = document.getElementById('seo-schema-container') || document.head;
+    
+    if (!galleryGrid) return;
+    galleryGrid.innerHTML = '';
+    schemaContainer.innerHTML = '';
+    
+    items.forEach((item) => {
+        const seo = item.seo || item;
+        const title = seo.title || item.rawTitle || "2+ Product Comparison Review";
+        const desc = seo.description || "Detailed long-form SEO specification analysis comparing two or more flagship models with VIP upgrade insights.";
+        const videoUrl = seo.videoUrl || (item.type === 'video' ? item.url : "");
+        const imageUrl = seo.imageUrl || (item.type === 'image' ? item.url : "");
+        const alt = seo.altText || title;
+        const keywordsRaw = seo.keywords || [];
+        const keywords = typeof keywordsRaw === 'string' ? keywordsRaw.split(",") : keywordsRaw;
 
-  if (!galleryGrid) {
-    return;
-  }
+        const comparisonText = seo.comparison || "Comprehensive benchmark audit comparing two or more devices across optical sensors, chipsets, and performance thresholds.";
+        const vipText = seo.vipTip || "Insider VIP Upgrade Trick: Avoid launch MSRP, leverage seasonal trade-in credits, or buy certified open-box inventory.";
 
-  galleryGrid.innerHTML = "";
-  schemaContainer
-    .querySelectorAll('script[data-review-schema="true"]')
-    .forEach((script) => script.remove());
+        const article = document.createElement('article');
+        article.className = 'media-card';
+        article.setAttribute('itemscope', '');
+        article.setAttribute('itemtype', 'https://schema.org/TechArticle');
 
-  items.forEach((item) => {
-    const seo = getSeo(item);
-    const title =
-      seo.title ||
-      item.rawTitle ||
-      "Product Comparison Review";
-    const description =
-      seo.description ||
-      "Detailed multi-product comparison with specifications and upgrade intelligence.";
-    const mediaUrl = getItemUrl(item, seo);
-    const isVideo =
-      Boolean(seo.videoUrl) ||
-      String(item.type || "").toLowerCase() === "video";
-    const keywords = getKeywords(seo.keywords);
-    const id = String(item.id || "");
-    const pageUrl = `pages/${getPageFileName(id)}.html`;
+        let mediaElement = '';
+        if (videoUrl) {
+            mediaElement = `<figure class="media-figure" style="margin:0;"><video controls preload="metadata" style="width:100%; height:240px; background:#000; object-fit:cover;"><source src="${videoUrl}" type="video/mp4">Your browser does not support video.</video></figure>`;
+        } else if (imageUrl) {
+            mediaElement = `<figure class="media-figure" style="margin:0;"><img src="${imageUrl}" alt="${alt}" loading="lazy" style="width:100%; height:240px; object-fit:cover;"></figure>`;
+        }
 
-    const article = document.createElement("article");
-    article.className = "media-card";
-    article.setAttribute("itemscope", "");
-    article.setAttribute("itemtype", "https://schema.org/TechArticle");
+        article.innerHTML = `
+            ${mediaElement}
+            <div class="media-info" style="padding: 20px;">
+                <h2 class="media-title" itemprop="headline" style="font-size: 1.25rem; margin-bottom: 10px; font-weight: 700;">${title}</h2>
+                <p class="media-desc" itemprop="description" style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6;">${desc}</p>
+                <div class="comparison-box" style="background: rgba(13, 110, 253, 0.08); border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 12px; line-height: 1.5;">
+                    📊 <strong>2+ Product Web-Grounded Comparison:</strong> ${comparisonText}
+                </div>
+                <div class="vip-banner" style="background: rgba(227, 116, 0, 0.1); border-left: 4px solid var(--vip-color); padding: 12px 14px; border-radius: 6px; font-size: 0.9rem; color: var(--vip-color); margin-bottom: 16px; font-weight: 500; line-height: 1.5;">
+                    🚀 <strong>VIP Upgrade Guidance & Pricing Tricks:</strong> ${vipText}
+                </div>
+                <div class="media-tags" style="display:flex; flex-wrap:wrap; gap:6px;">
+                    ${keywords.map(tag => `<span class="tag" style="background:rgba(13,110,253,0.1); color:var(--accent); font-size:0.75rem; padding:4px 10px; border-radius:4px; font-weight: 500;">#${typeof tag === 'string' ? tag.trim() : tag}</span>`).join("")}
+                </div>
+            </div>
+        `;
+        galleryGrid.appendChild(article);
 
-    const mediaElement = mediaUrl
-      ? isVideo
-        ? `
-          <figure class="media-figure">
-            <video controls preload="metadata" playsinline>
-              <source src="${escapeHtml(mediaUrl)}" type="video/mp4">
-              Your browser does not support video playback.
-            </video>
-          </figure>
-        `
-        : `
-          <figure class="media-figure">
-            <img
-              src="${escapeHtml(mediaUrl)}"
-              alt="${escapeHtml(seo.altText || title)}"
-              loading="lazy"
-            >
-          </figure>
-        `
-      : `
-        <div class="media-placeholder">
-          No media preview available
-        </div>
-      `;
-
-    const keywordMarkup = keywords
-      .map(
-        (keyword) =>
-          `<span class="tag">#${escapeHtml(keyword)}</span>`
-      )
-      .join("");
-
-    article.innerHTML = `
-      ${mediaElement}
-      <div class="media-info">
-        <p class="eyebrow">Verified media review</p>
-        <h2 class="media-title" itemprop="headline">
-          ${escapeHtml(title)}
-        </h2>
-        <p class="media-desc" itemprop="description">
-          ${escapeHtml(description)}
-        </p>
-        <div class="comparison-box">
-          <strong>Comparison intelligence</strong>
-          <span>
-            ${escapeHtml(
-              seo.comparison ||
-                "Detailed specifications, performance, and value analysis."
-            )}
-          </span>
-        </div>
-        <div class="vip-banner">
-          <strong>VIP upgrade guidance</strong>
-          <span>
-            ${escapeHtml(
-              seo.vipTip ||
-                "Compare trade-in credits, open-box pricing, and real upgrade value."
-            )}
-          </span>
-        </div>
-        <div class="media-card-footer">
-          <div class="media-tags">${keywordMarkup}</div>
-          <a class="button button-secondary" href="${escapeHtml(pageUrl)}">
-            Open full review
-          </a>
-        </div>
-      </div>
-    `;
-
-    galleryGrid.appendChild(article);
-
-    if (seo.schema && typeof seo.schema === "object") {
-      const schemaTag = document.createElement("script");
-      schemaTag.type = "application/ld+json";
-      schemaTag.dataset.reviewSchema = "true";
-      schemaTag.textContent = JSON.stringify(seo.schema);
-      schemaContainer.appendChild(schemaTag);
-    }
-  });
+        const schemaObj = seo.schema;
+        if (schemaObj && Object.keys(schemaObj).length > 0) {
+            try {
+                const scriptTag = document.createElement('script');
+                scriptTag.type = 'application/ld+json';
+                scriptTag.textContent = JSON.stringify(schemaObj);
+                schemaContainer.appendChild(scriptTag);
+            } catch (e) {
+                console.warn("Schema insertion warning", e);
+            }
+        }
+    });
 }
 
 function setupControls() {
-  const searchInput = document.getElementById("search-input");
-
-  if (!searchInput || searchListenerAttached) {
-    return;
-  }
-
-  searchListenerAttached = true;
-
-  searchInput.addEventListener("input", (event) => {
-    const query = event.target.value.toLowerCase().trim();
-
-    const filtered = globalData.filter((item) => {
-      const seo = getSeo(item);
-      const searchableText = [
-        seo.title,
-        seo.description,
-        seo.comparison,
-        seo.vipTip,
-        seo.keywords,
-        item.rawTitle,
-        item.category
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return searchableText.includes(query);
-    });
-
-    renderCards(filtered);
-  });
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = globalData.filter(item => {
+                const seo = item.seo || item;
+                return (seo.title || "").toLowerCase().includes(query) || (seo.description || "").toLowerCase().includes(query);
+            });
+            renderCards(filtered);
+        });
+    }
 }
 
-document.addEventListener("DOMContentLoaded", loadData);
+document.addEventListener('DOMContentLoaded', loadData);
