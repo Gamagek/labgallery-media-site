@@ -1,0 +1,700 @@
+// app.js
+let globalData = [];
+
+async function loadData() {
+    const galleryGrid = document.getElementById('gallery');
+    if (galleryGrid) {
+        galleryGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color);">
+                <div style="font-size: 1.5rem; margin-bottom: 10px;">⏳</div>
+                <h3 style="margin: 0 0 5px 0; color: var(--text-main);">Loading Crawlable 2+ Product Comparison Intelligence...</h3>
+                <p style="margin: 0; color: var(--text-muted);">Retrieving multi-device comparison specs, rich descriptions, and JSON-LD schema.</p>
+            </div>
+        `;
+    }
+
+    try {
+        const response = await fetch('./data.json', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const rawJson = await response.json();
+        globalData = Array.isArray(rawJson) ? rawJson : (rawJson.data || []);
+
+        if (!Array.isArray(globalData) || globalData.length === 0) {
+            if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; grid-column:1/-1;">No comparison reviews published yet.</p>';
+            return;
+        }
+
+        renderCards(globalData);
+        setupControls();
+    } catch (err) {
+        console.error('Fetch error:', err);
+        if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; color:red; grid-column:1/-1;">Error loading data.json feed.</p>';
+    }
+}
+
+function renderCards(items) {
+    const galleryGrid = document.getElementById('gallery');
+    const schemaContainer = document.getElementById('seo-schema-container') || document.head;
+    
+    if (!galleryGrid) return;
+    galleryGrid.innerHTML = '';
+    schemaContainer.innerHTML = '';
+    
+    items.forEach((item) => {
+        const seo = item.seo || item;
+        const title = seo.title || item.rawTitle || "2+ Product Comparison Review";
+        const desc = seo.description || "Detailed long-form SEO specification analysis comparing two or more flagship models with VIP upgrade insights.";
+        const videoUrl = seo.videoUrl || (item.type === 'video' ? item.url : "");
+        const imageUrl = seo.imageUrl || (item.type === 'image' ? item.url : "");
+        const alt = seo.altText || title;
+        const keywordsRaw = seo.keywords || [];
+        const keywords = typeof keywordsRaw === 'string' ? keywordsRaw.split(",") : keywordsRaw;
+
+        const comparisonText = seo.comparison || "Comprehensive benchmark audit comparing two or more devices across optical sensors, chipsets, and performance thresholds.";
+        const vipText = seo.vipTip || "Insider VIP Upgrade Trick: Avoid launch MSRP, leverage seasonal trade-in credits, or buy certified open-box inventory.";
+
+        const article = document.createElement('article');
+        article.className = 'media-card';
+        article.setAttribute('itemscope', '');
+        article.setAttribute('itemtype', 'https://schema.org/TechArticle');
+
+        let mediaElement = '';
+        if (videoUrl) {
+            mediaElement = `<figure class="media-figure" style="margin:0;"><video controls preload="metadata" style="width:100%; height:240px; background:#000; object-fit:cover;"><source src="${videoUrl}" type="video/mp4">Your browser does not support video.</video></figure>`;
+        } else if (imageUrl) {
+            mediaElement = `<figure class="media-figure" style="margin:0;"><img src="${imageUrl}" alt="${alt}" loading="lazy" style="width:100%; height:240px; object-fit:cover;"></figure>`;
+        }
+
+        article.innerHTML = `
+            ${mediaElement}
+            <div class="media-info" style="padding: 20px;">
+                <h2 class="media-title" itemprop="headline" style="font-size: 1.25rem; margin-bottom: 10px; font-weight: 700;">${title}</h2>
+                <p class="media-desc" itemprop="description" style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6;">${desc}</p>
+                <div class="comparison-box" style="background: rgba(13, 110, 253, 0.08); border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 12px; line-height: 1.5;">
+                    📊 <strong>2+ Product Web-Grounded Comparison:</strong> ${comparisonText}
+                </div>
+                <div class="vip-banner" style="background: rgba(227, 116, 0, 0.1); border-left: 4px solid var(--vip-color); padding: 12px 14px; border-radius: 6px; font-size: 0.9rem; color: var(--vip-color); margin-bottom: 16px; font-weight: 500; line-height: 1.5;">
+                    🚀 <strong>VIP Upgrade Guidance & Pricing Tricks:</strong> ${vipText}
+                </div>
+                <div class="media-tags" style="display:flex; flex-wrap:wrap; gap:6px;">
+                    ${keywords.map(tag => `<span class="tag" style="background:rgba(13,110,253,0.1); color:var(--accent); font-size:0.75rem; padding:4px 10px; border-radius:4px; font-weight: 500;">#${typeof tag === 'string' ? tag.trim() : tag}</span>`).join("")}
+                </div>
+            </div>
+        `;
+        galleryGrid.appendChild(article);
+
+        const schemaObj = seo.schema;
+        if (schemaObj && Object.keys(schemaObj).length > 0) {
+            try {
+                const scriptTag = document.createElement('script');
+                scriptTag.type = 'application/ld+json';
+                scriptTag.textContent = JSON.stringify(schemaObj);
+                schemaContainer.appendChild(scriptTag);
+            } catch (e) {
+                console.warn("Schema insertion warning", e);
+            }
+        }
+    });
+}
+
+function setupControls() {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = globalData.filter(item => {
+                const seo = item.seo || item;
+                return (seo.title || "").toLowerCase().includes(query) || (seo.description || "").toLowerCase().includes(query);
+            });
+            renderCards(filtered);
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare Media & SEO Review Gallery</title>
+    <meta name="description" content="AI-grounded Cloudflare video streaming reviews, multi-device product comparisons, and VIP upgrade intelligence.">
+    
+    <!-- Dynamic SEO Schema Container for Google Crawlers -->
+    <div id="seo-schema-container"></div>
+
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --accent: #0d6efd;
+            --vip-color: #e37400;
+            --radius: 10px;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --accent: #3d8bfd;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 24px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.6rem; margin: 0 0 4px 0; }
+        p { color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+
+        .controls-bar {
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            gap: 12px;
+        }
+
+        .controls-bar input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .gallery-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .media-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        }
+
+        .media-info { padding: 20px; }
+        .media-title { font-weight: 700; font-size: 1.25rem; margin-bottom: 10px; color: var(--text-main); }
+        .media-desc { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+
+        .comparison-box {
+            background: rgba(13, 110, 253, 0.08);
+            border-left: 4px solid var(--accent);
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .vip-banner {
+            background: rgba(227, 116, 0, 0.1);
+            border-left: 4px solid var(--vip-color);
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--vip-color);
+            margin-bottom: 16px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .tag {
+            background: rgba(13,110,253,0.1);
+            color: var(--accent);
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .site-footer {
+            max-width: 1200px;
+            margin: 40px auto 0 auto;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>Cloudflare Media & SEO Review Gallery</h1>
+        <p>AI-grounded video streaming reviews, product comparisons, and VIP upgrade intelligence.</p>
+    </div>
+    <button onclick="document.body.classList.toggle('dark-mode')" style="padding: 6px 12px; font-size: 0.8rem; cursor: pointer;">🌓 Theme</button>
+</header>
+
+<div class="controls-bar">
+    <input type="text" id="search-input" placeholder="Search reviews, specs, or models...">
+</div>
+
+<main id="gallery" class="gallery-container">
+    <!-- Dynamic cards injected here -->
+</main>
+
+<footer class="site-footer">
+    &copy; 2026 Cloudflare Media & SEO Review Gallery. All rights reserved.
+</footer>
+
+<script src="./app.js"></script>
+</body>
+</html>
+
+
+name: Sync Spreadsheet Data & Build
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-media-feed:
+    name: Fetch and Update Data Feed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch Live Feed from Google Apps Script
+        env:
+          GAS_URL: ${{ secrets.GAS_URL }}
+        run: |
+          if [ -z "$GAS_URL" ]; then
+            echo "::error::GAS_URL repository secret is missing or empty."
+            exit 1
+          fi
+          echo "Fetching latest SEO media JSON feed from Apps Script Web App..."
+          curl -sL -m 60 "$GAS_URL" -o temp_feed.json
+          if [ ! -s temp_feed.json ]; then
+            echo "::error::Received empty response from Apps Script URL."
+            exit 1
+          fi
+
+      - name: Validate and Format JSON
+        run: |
+          echo "Validating JSON payload structure with jq..."
+          if ! jq . temp_feed.json > data.json; then
+            echo "::error::Invalid JSON returned from Google Apps Script."
+            cat temp_feed.json
+            exit 1
+          fi
+          rm -f temp_feed.json
+          echo "Successfully formatted data.json"
+
+      - name: Commit and Push Changes to Main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main || git checkout -b main
+          git add data.json
+          git diff --staged --quiet || (git commit -m "chore: sync automated SEO media feed [skip ci]" && git pull origin main --rebase --autostash || true && git push origin main --force)
+
+
+/**
+ * ============================================================================
+ * GOOGLE APPS SCRIPT (Code.gs)
+ * Admin Studio with Cloudflare Video Support, Multi-Product Web Grounding,
+ * Rich SEO Metadata, JSON-LD Schema, and Permanent Sheet Sync.
+ * ============================================================================
+ */
+
+const GEMINI_MODEL = "gemini-3.5-flash";
+const SHEET_NAME = "media";
+const ADMIN_PASSWORD = "SecretAdminPassword123";
+
+function doGet(e) {
+  var action = e && e.parameter && e.parameter.action ? e.parameter.action : "json";
+  if (action === "admin") return serveAdminPanel();
+  return exportJSON();
+}
+
+function doPost(e) {
+  try {
+    var payload = JSON.parse(e.postData.contents);
+    var action = payload.action;
+    
+    if (action === "verify_password") {
+      return ContentService.createTextOutput(JSON.stringify({ success: payload.password === ADMIN_PASSWORD }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === "run_grounding_comparison") {
+      if (payload.password !== ADMIN_PASSWORD) throw new Error("Unauthorized");
+      var result = runWebGrounding(payload.comparisonQuery, payload.videoUrl, payload.imageUrl, getApiKey());
+      return ContentService.createTextOutput(JSON.stringify({ success: true, data: result }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === "save_permanent") {
+      if (payload.password !== ADMIN_PASSWORD) throw new Error("Unauthorized");
+      var msg = saveRecordToSheet(payload.record);
+      return ContentService.createTextOutput(JSON.stringify({ success: true, message: msg }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    throw new Error("Invalid action");
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getApiKey() {
+  var sp = PropertiesService.getScriptProperties();
+  var key = sp.getProperty("GEMINI_API_KEY") || sp.getProperty("GOOGLE_API_KEY");
+  if (!key) throw new Error("GEMINI_API_KEY not configured in Script Properties.");
+  return key;
+}
+
+function runWebGrounding(query, videoUrl, imageUrl, apiKey) {
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + apiKey;
+  
+  var prompt = `
+You are an elite Tech Market Intelligence Architect & SEO Master. 
+Perform live Google Search grounding to compare the following products: "${query}".
+
+Requirements:
+1. Extract authentic market specifications, benchmark scores, and popular higher-priced VIP flagship alternatives.
+2. Generate rich SEO comparison text, cheap upgrade tips, trade-in value hacks, and valid JSON-LD TechArticle schema.
+
+Return STRICTLY valid JSON without markdown backticks:
+{
+  "title": "SEO Optimized Title under 60 characters",
+  "description": "Compelling Meta Description between 150 and 160 characters ending with a call to action.",
+  "keywords": "comma, separated, high-intent, LSI, keywords",
+  "altText": "WCAG accessible description",
+  "schema": {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Product Comparison Review",
+    "description": "Detailed multi-device specification analysis."
+  },
+  "comparison": "Detailed live web-grounded comparative review covering hardware sensors, chipsets, and performance points.",
+  "vipTip": "Actionable insider buying advice, budget upgrade paths, and trade-in value hacks.",
+  "videoUrl": "${videoUrl}",
+  "imageUrl": "${imageUrl}"
+}
+  `.trim();
+
+  var requestPayload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    tools: [{ google_search: {} }],
+    generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+  };
+
+  var options = { method: "post", contentType: "application/json", payload: JSON.stringify(requestPayload), muteHttpExceptions: true };
+  var response = UrlFetchApp.fetch(url, options);
+  if (response.getResponseCode() !== 200) throw new Error("Gemini API Error: " + response.getContentText());
+
+  var jsonRes = JSON.parse(response.getContentText());
+  var candidateText = jsonRes.candidates && jsonRes.candidates[0] && jsonRes.candidates[0].content && jsonRes.candidates[0].content.parts[0].text;
+  return JSON.parse(candidateText.replace(/```json/g, "").replace(/```/g, "").trim());
+}
+
+function saveRecordToSheet(record) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(["id", "type", "url", "rawTitle", "category", "seometadata"]);
+  }
+  
+  var id = "item-" + new Date().getTime();
+  sheet.appendRow([id, record.videoUrl ? "video" : "image", record.videoUrl || record.imageUrl, record.title, "Cloudflare Media Review", JSON.stringify(record)]);
+  return "Successfully saved and locked permanently to spreadsheet!";
+}
+
+function exportJSON() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  
+  var rows = sheet.getDataRange().getValues();
+  var data = [];
+  for (let i = 1; i < rows.length; i++) {
+    try {
+      var seo = rows[i][5] ? JSON.parse(rows[i][5]) : {};
+      data.push({ id: rows[i][0], type: rows[i][1], url: rows[i][2], category: rows[i][4], seo: seo });
+    } catch(e) {}
+  }
+  return ContentService.createTextOutput(JSON.stringify(data, null, 2)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function serveAdminPanel() {
+  var html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cloudflare Media & Comparison Studio</title>
+    <style>
+        :root { --bg: #f8f9fa; --card: #fff; --text: #212529; --accent: #0d6efd; --success: #198754; --border: #dee2e6; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+        .wrap { max-width: 850px; margin: 0 auto; background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .group { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; background: #fff; color: #000; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+        .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+        .btn-success { background: var(--success); color: #fff; width: 100%; margin-top: 12px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h2>🔐 Cloudflare Media & Comparison Studio</h2>
+    
+    <div id="login-sec">
+        <div class="group"><label>Admin Password</label><input type="password" id="pass" placeholder="Enter password"></div>
+        <button class="btn-primary" onclick="login()">Login</button>
+        <p id="err" style="color: red; margin-top: 8px;"></p>
+    </div>
+
+    <div id="app-sec" class="hidden">
+        <div class="group"><label>Main Review Video URL (Cloudflare Bucket Link e.g., https://.../video.mp4)</label><input type="text" id="video-url" placeholder="https://pub-xxx.r2.dev/review.mp4"></div>
+        <div class="group"><label>Comparison Models (e.g., Google Pixel 9 Pro vs Samsung Galaxy S24 Ultra vs iPhone 16 Pro Max)</label><input type="text" id="comparison-query" value="Google Pixel 9 Pro vs Samsung Galaxy S24 Ultra vs iPhone 16 Pro Max comparison"></div>
+        <div class="group"><label>Main Poster / Banner Image URL</label><input type="text" id="image-url" value="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"></div>
+        <button class="btn-primary" onclick="runGrounding()">⚡ Run Web Grounding & Build Rich Suite</button>
+
+        <div id="loading" class="hidden" style="margin: 15px 0; color: var(--accent); text-align: center;">⏳ Generating grounded comparison & SEO metadata...</div>
+
+        <div id="results-panel" class="hidden" style="margin-top: 24px;">
+            <h3>✨ Editable Review & SEO Intelligence</h3>
+            <div class="group"><label>SEO Title (< 60 chars)</label><input type="text" id="edit-title"></div>
+            <div class="group"><label>Meta Description (150-160 chars)</label><textarea id="edit-desc" rows="3"></textarea></div>
+            <div class="group"><label>Keywords</label><input type="text" id="edit-keywords"></div>
+            <div class="group"><label>Main Comparison Details</label><textarea id="edit-comparison" rows="4"></textarea></div>
+            <div class="group"><label>VIP Upgrade Tips & Pricing Hacks</label><textarea id="edit-viptip" rows="3"></textarea></div>
+
+            <button class="btn-success" onclick="savePermanent()">💾 Save Permanently & Index to Feed</button>
+            <p id="save-status" style="text-align: center; font-weight: 500; margin-top: 10px;"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPass = "";
+    let fullScanData = {};
+
+    function login() {
+        const p = document.getElementById('pass').value;
+        google.script.run.withSuccessHandler(res => {
+            if (res.success) {
+                currentPass = p;
+                document.getElementById('login-sec').classList.add('hidden');
+                document.getElementById('app-sec').classList.remove('hidden');
+            } else { document.getElementById('err').textContent = "Incorrect password."; }
+        }).doPost({ postData: { contents: JSON.stringify({ action: "verify_password", password: p }) } });
+    }
+
+    function runGrounding() {
+        const query = document.getElementById('comparison-query').value;
+        const videoUrl = document.getElementById('video-url').value;
+        const imgUrl = document.getElementById('image-url').value;
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('results-panel').classList.add('hidden');
+
+        google.script.run.withSuccessHandler(res => {
+            document.getElementById('loading').classList.add('hidden');
+            if (res.success) {
+                fullScanData = res.data;
+                document.getElementById('edit-title').value = res.data.title || "";
+                document.getElementById('edit-desc').value = res.data.description || "";
+                document.getElementById('edit-keywords').value = res.data.keywords || "";
+                document.getElementById('edit-comparison').value = res.data.comparison || "";
+                document.getElementById('edit-viptip').value = res.data.vipTip || "";
+                document.getElementById('results-panel').classList.remove('hidden');
+            } else { alert("Error: " + res.error); }
+        }).doPost({ postData: { contents: JSON.stringify({ action: "run_grounding_comparison", password: currentPass, comparisonQuery: query, videoUrl: videoUrl, imageUrl: imgUrl }) } });
+    }
+
+    function savePermanent() {
+        fullScanData.title = document.getElementById('edit-title').value;
+        fullScanData.description = document.getElementById('edit-desc').value;
+        fullScanData.keywords = document.getElementById('edit-keywords').value;
+        fullScanData.comparison = document.getElementById('edit-comparison').value;
+        fullScanData.vipTip = document.getElementById('edit-viptip').value;
+        fullScanData.videoUrl = document.getElementById('video-url').value;
+        fullScanData.imageUrl = document.getElementById('image-url').value;
+
+        document.getElementById('save-status').style.color = "var(--accent)";
+        document.getElementById('save-status').textContent = "Saving to spreadsheet...";
+
+        google.script.run.withSuccessHandler(res => {
+            if (res.success) {
+                document.getElementById('save-status').style.color = "var(--success)";
+                document.getElementById('save-status').textContent = "✓ Published successfully! GitHub actions will sync index.";
+            } else { alert("Save Error: " + res.error); }
+        }).doPost({ postData: { contents: JSON.stringify({ action: "save_permanent", password: currentPass, record: fullScanData }) } });
+    }
+</script>
+</body>
+</html>
+  `;
+  return HtmlService.createHtmlOutput(html).setTitle("Media Studio").setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+
+// app.js
+let globalData = [];
+
+async function loadData() {
+    const galleryGrid = document.getElementById('gallery');
+    if (galleryGrid) {
+        galleryGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color);">
+                <div style="font-size: 1.5rem; margin-bottom: 10px;">⏳</div>
+                <h3 style="margin: 0 0 5px 0; color: var(--text-main);">Loading Crawlable Ultimate SEO Intelligence...</h3>
+                <p style="margin: 0; color: var(--text-muted);">Retrieving multi-product comparison specs, rich descriptions, and JSON-LD schema.</p>
+            </div>
+        `;
+    }
+
+    try {
+        const response = await fetch('./data.json', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const rawJson = await response.json();
+        globalData = Array.isArray(rawJson) ? rawJson : (rawJson.data || []);
+
+        if (!Array.isArray(globalData) || globalData.length === 0) {
+            if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; grid-column:1/-1;">No comparison reviews published yet.</p>';
+            return;
+        }
+
+        renderCards(globalData);
+        setupControls();
+    } catch (err) {
+        console.error('Fetch error:', err);
+        if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; color:red; grid-column:1/-1;">Error loading data.json feed.</p>';
+    }
+}
+
+function renderCards(items) {
+    const galleryGrid = document.getElementById('gallery');
+    const schemaContainer = document.getElementById('seo-schema-container') || document.head;
+    
+    if (!galleryGrid) return;
+    galleryGrid.innerHTML = '';
+    schemaContainer.innerHTML = '';
+    
+    items.forEach((item, index) => {
+        const seo = item.seo || item;
+        const title = seo.title || item.rawTitle || "Ultimate Product Comparison Review";
+        const desc = seo.description || "Detailed long-form SEO specification analysis, multi-product comparison, and VIP upgrade insights.";
+        const videoUrl = seo.videoUrl || (item.type === 'video' ? item.url : "");
+        const imageUrl = seo.imageUrl || (item.type === 'image' ? item.url : "");
+        const alt = seo.altText || title;
+        const keywordsRaw = seo.keywords || [];
+        const keywords = typeof keywordsRaw === 'string' ? keywordsRaw.split(",") : keywordsRaw;
+
+        const comparisonText = seo.comparison || "Comprehensive benchmark audit comparing multi-device optical sensors, chipsets, and thermal efficiency.";
+        const vipText = seo.vipTip || "Insider VIP Upgrade Trick: Avoid launch MSRP, leverage trade-in credits, or buy certified open-box inventory.";
+
+        const article = document.createElement('article');
+        article.className = 'media-card';
+        article.setAttribute('itemscope', '');
+        article.setAttribute('itemtype', 'https://schema.org/TechArticle');
+
+        let mediaElement = '';
+        if (videoUrl) {
+            mediaElement = `<figure class="media-figure" style="margin:0;"><video controls preload="metadata" style="width:100%; height:240px; background:#000; object-fit:cover;"><source src="${videoUrl}" type="video/mp4">Your browser does not support video.</video></figure>`;
+        } else if (imageUrl) {
+            mediaElement = `<figure class="media-figure" style="margin:0;"><img src="${imageUrl}" alt="${alt}" loading="lazy" style="width:100%; height:240px; object-fit:cover;"></figure>`;
+        }
+
+        article.innerHTML = `
+            ${mediaElement}
+            <div class="media-info" style="padding: 20px;">
+                <h2 class="media-title" itemprop="headline" style="font-size: 1.25rem; margin-bottom: 10px; font-weight: 700;">${title}</h2>
+                <p class="media-desc" itemprop="description" style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6;">${desc}</p>
+                <div class="comparison-box" style="background: rgba(13, 110, 253, 0.08); border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 12px; line-height: 1.5;">
+                    📊 <strong>Web-Grounded Comparison Options:</strong> ${comparisonText}
+                </div>
+                <div class="vip-banner" style="background: rgba(227, 116, 0, 0.1); border-left: 4px solid var(--vip-color); padding: 12px 14px; border-radius: 6px; font-size: 0.9rem; color: var(--vip-color); margin-bottom: 16px; font-weight: 500; line-height: 1.5;">
+                    🚀 <strong>VIP Upgrade Guidance & Pricing Tricks:</strong> ${vipText}
+                </div>
+                <div class="media-tags" style="display:flex; flex-wrap:wrap; gap:6px;">
+                    ${keywords.map(tag => `<span class="tag" style="background:rgba(13,110,253,0.1); color:var(--accent); font-size:0.75rem; padding:4px 10px; border-radius:4px; font-weight: 500;">#${typeof tag === 'string' ? tag.trim() : tag}</span>`).join("")}
+                </div>
+            </div>
+        `;
+        galleryGrid.appendChild(article);
+
+        const schemaObj = seo.schema;
+        if (schemaObj && Object.keys(schemaObj).length > 0) {
+            try {
+                const scriptTag = document.createElement('script');
+                scriptTag.type = 'application/ld+json';
+                scriptTag.textContent = JSON.stringify(schemaObj);
+                schemaContainer.appendChild(scriptTag);
+            } catch (e) {
+                console.warn("Schema insertion warning", e);
+            }
+        }
+    });
+}
+
+function setupControls() {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = globalData.filter(item => {
+                const seo = item.seo || item;
+                return (seo.title || "").toLowerCase().includes(query) || (seo.description || "").toLowerCase().includes(query);
+            });
+            renderCards(filtered);
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+
+
+this is our massive success step , only requirement is to add video url of cloudflare bucket and show as full view can you add this blocks when clicking a button so i can add every media continuously with json ld shema tags and meta taga with seo comaprison description that permenetly save in index html by help of github

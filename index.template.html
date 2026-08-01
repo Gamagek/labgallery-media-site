@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloudflare Media &amp; Product Comparison Reviews</title>
+  <meta
+    name="description"
+    content="Cloudflare media reviews, multi-product comparisons, specifications, and VIP upgrade intelligence."
+  >
+  <meta
+    name="keywords"
+    content="product comparison, tech review, Cloudflare video, upgrade intelligence"
+  >
+  <meta property="og:title" content="Cloudflare Media & Product Comparison Reviews">
+  <meta
+    property="og:description"
+    content="Explore media-backed product comparisons and SEO review intelligence."
+  >
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="./style.css">
+  {{INDEX_SCHEMA}}
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Cloudflare media intelligence</p>
+      <h1>Product comparisons that help you upgrade with confidence.</h1>
+      <p class="site-subtitle">
+        Watch the media, compare the specifications, and uncover the real cost of upgrading.
+      </p>
+    </div>
+    <a class="button button-primary" href="{{ADMIN_URL}}">
+      Open Media Studio
+    </a>
+  </header>
+
+  <main>
+    <section class="controls-bar" aria-label="Review search">
+      <label class="search-label" for="search-input">Find a review</label>
+      <input
+        id="search-input"
+        type="search"
+        placeholder="Search products, specs, or upgrade advice"
+      >
+    </section>
+
+    <section
+      id="gallery"
+      class="gallery-container"
+      aria-live="polite"
+    ></section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Generated from the permanent media feed and refreshed by GitHub Actions.</p>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
