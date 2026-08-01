@@ -1,61 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloudflare Media &amp; Product Comparison Reviews</title>
-  <meta
-    name="description"
-    content="Cloudflare media reviews, multi-product comparisons, specifications, and VIP upgrade intelligence."
-  >
-  <meta
-    name="keywords"
-    content="product comparison, tech review, Cloudflare video, upgrade intelligence"
-  >
-  <meta property="og:title" content="Cloudflare Media & Product Comparison Reviews">
-  <meta
-    property="og:description"
-    content="Explore media-backed product comparisons and SEO review intelligence."
-  >
-  <meta property="og:type" content="website">
-  <link rel="stylesheet" href="./style.css">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Cloudflare Media \u0026 Product Comparison Reviews","description":"Media-backed product comparisons and upgrade intelligence.","hasPart":[{"@type":"TechArticle","headline":"Product Comparison Review","description":"","url":"pages/1.html"}]}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare Media & SEO Review Gallery</title>
+    <meta name="description" content="AI-grounded Cloudflare video streaming reviews, multi-device product comparisons, and VIP upgrade intelligence.">
+    
+    <!-- Dynamic SEO Schema Container for Google Crawlers -->
+    <div id="seo-schema-container"></div>
+
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --accent: #0d6efd;
+            --vip-color: #e37400;
+            --radius: 10px;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --accent: #3d8bfd;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 24px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.6rem; margin: 0 0 4px 0; }
+        p { color: var(--text-muted); margin: 0; font-size: 0.95rem; }
+
+        .controls-bar {
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            display: flex;
+            gap: 12px;
+        }
+
+        .controls-bar input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .gallery-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+        }
+
+        .media-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        }
+
+        .media-info { padding: 20px; }
+        .media-title { font-weight: 700; font-size: 1.25rem; margin-bottom: 10px; color: var(--text-main); }
+        .media-desc { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+
+        .comparison-box {
+            background: rgba(13, 110, 253, 0.08);
+            border-left: 4px solid var(--accent);
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .vip-banner {
+            background: rgba(227, 116, 0, 0.1);
+            border-left: 4px solid var(--vip-color);
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--vip-color);
+            margin-bottom: 16px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .tag {
+            background: rgba(13,110,253,0.1);
+            color: var(--accent);
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .site-footer {
+            max-width: 1200px;
+            margin: 40px auto 0 auto;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-  <header class="site-header">
+
+<header>
     <div>
-      <p class="eyebrow">Cloudflare media intelligence</p>
-      <h1>Product comparisons that help you upgrade with confidence.</h1>
-      <p class="site-subtitle">
-        Watch the media, compare the specifications, and uncover the real cost of upgrading.
-      </p>
+        <h1>Cloudflare Media & SEO Review Gallery</h1>
+        <p>AI-grounded video streaming reviews, product comparisons, and VIP upgrade intelligence.</p>
     </div>
-    <a class="button button-primary" href="https://script.google.com/macros/s/AKfycbyMa1xbj8MAeSXIoCK_tJ9_1GKbJl09UrpltoR5N-zIUVxeQItbPVH9PuWfzcGpRqromw/exec?action=admin">
-      Open Media Studio
-    </a>
-  </header>
+    <button onclick="document.body.classList.toggle('dark-mode')" style="padding: 6px 12px; font-size: 0.8rem; cursor: pointer;">🌓 Theme</button>
+</header>
 
-  <main>
-    <section class="controls-bar" aria-label="Review search">
-      <label class="search-label" for="search-input">Find a review</label>
-      <input
-        id="search-input"
-        type="search"
-        placeholder="Search products, specs, or upgrade advice"
-      >
-    </section>
+<div class="controls-bar">
+    <input type="text" id="search-input" placeholder="Search reviews, specs, or models...">
+</div>
 
-    <section
-      id="gallery"
-      class="gallery-container"
-      aria-live="polite"
-    ></section>
-  </main>
+<main id="gallery" class="gallery-container">
+    <!-- Dynamic cards injected here -->
+</main>
 
-  <footer class="site-footer">
-    <p>Generated from the permanent media feed and refreshed by GitHub Actions.</p>
-  </footer>
+<footer class="site-footer">
+    &copy; 2026 Cloudflare Media & SEO Review Gallery. All rights reserved.
+</footer>
 
-  <script src="./app.js"></script>
+<script src="./app.js"></script>
 </body>
 </html>
