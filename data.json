@@ -1,11 +1,9 @@
 [
   {
-    "id": "1",
+    "id": 1,
     "type": "video",
     "url": "https://pub-16ad521c710741b8abf9838e9bddac76.r2.dev/Lab%20review%201.mp4",
-    "rawTitle": "",
     "category": "",
-    "seo": {},
-    "comments": []
+    "seo": {}
   }
 ]
